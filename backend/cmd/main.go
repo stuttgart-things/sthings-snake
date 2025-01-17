@@ -9,6 +9,7 @@ import (
 	"time"
 
 	tl "github.com/JoelOtter/termloop"
+	"github.com/deggja/chaossnake/pkg/k8s"
 )
 
 type Coordinates struct {
@@ -31,7 +32,7 @@ var foodPodMappings []FoodPodMapping
 
 type FoodPodMapping struct {
     foodEntity   *Food
-    resourceInfo ResourceInfo
+    resourceInfo k8s.ResourceInfo
 }
 
 const (
@@ -66,7 +67,7 @@ func (f *Food) PlaceFood(levelWidth, levelHeight int) {
 
 	// Get a random resource name and namespace to associate with this food
 	select {
-    case resourceInfo := <-resourceInfoQueue:
+    case resourceInfo := <-k8s.ResourceInfoQueue:
         foodPodMappings = append(foodPodMappings, FoodPodMapping{
             foodEntity: f,
             resourceInfo:    resourceInfo,
@@ -251,7 +252,7 @@ func (snake *Snake) Tick(event tl.Event) {
             // Handle resource deletion linked to food
             for index, mapping := range foodPodMappings {
                 if mapping.foodEntity == food {
-                    go deleteResource(mapping.resourceInfo)
+                    go k8s.DeleteResource(mapping.resourceInfo)
                     deletionMessage := fmt.Sprintf("Oh no! Seems like you ate %s: %s in namespace %s", mapping.resourceInfo.Type, mapping.resourceInfo.Name, mapping.resourceInfo.Namespace)
                     deletedPodText.SetText(deletionMessage)
                     log.Println(deletionMessage)
@@ -287,21 +288,21 @@ func main() {
     configFilePath := flag.String("config", "", "Path to configuration file")
     flag.Parse()
 
-    setDefaultConfig()
+    k8s.SetDefaultConfig()
 
     // Load configuration from the specified file if provided
     if *configFilePath != "" {
-        err := loadConfigFromFile(*configFilePath)
+        err := k8s.LoadConfigFromFile(*configFilePath)
         if err != nil {
             log.Fatalf("Failed to load config file: %s", err)
         }
     }
 
     // init k8s client
-    initKubeClient()
+    k8s.InitKubeClient()
 
     // Start fetching resources to avoid lag during gameplay
-    go fetchResources()
+    go k8s.FetchResources()
 
     logFile, err := os.OpenFile("chaos.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
     if err != nil {
@@ -329,7 +330,7 @@ func main() {
     food.SetPosition(foodX, foodY)
 
     select {
-    case resourceInfo := <-resourceInfoQueue:
+    case resourceInfo := <-k8s.ResourceInfoQueue:
         foodPodMappings = append(foodPodMappings, FoodPodMapping{
             foodEntity: food,
             resourceInfo: resourceInfo,
