@@ -1,6 +1,6 @@
-class Serpent < Formula
+class Chaossnake < Formula
   desc "Play snake in your terminal and wreck havoc to your Kubernetes cluster. Lol."
-  homepage "https://github.com/deggja/serpent"
+  homepage "https://github.com/deggja/chaossnake"
 
   if OS.mac?
     url "https://github.com/deggja/chaossnake/releases/download/v0.2.0/chaossnake_0.2.0_darwin_amd64.tar.gz"
@@ -11,10 +11,10 @@ class Serpent < Formula
   end
 
   def install
-    bin.install "serpent"
+    bin.install "chaossnake"
   end
 
   test do
-    system "#{bin}/serpent", "version"
+    system "#{bin}/chaossnake", "version"
   end
 end
