@@ -29,6 +29,7 @@ type Food struct {
 }
 
 var foodPodMappings []FoodPodMapping
+var deletedPodTextEntities []*tl.Text
 
 type FoodPodMapping struct {
     foodEntity   *Food
@@ -119,6 +120,11 @@ func (snake *Snake) CollidesWithSelf() bool {
 }
 
 func GameOver() {
+    for _, entity := range deletedPodTextEntities {
+        game.Screen().RemoveEntity(entity)
+    }
+    deletedPodTextEntities = nil
+    
 	showFinalScreen()
 	log.Println("Game Over!")
 }
@@ -183,6 +189,36 @@ func updatePauseTextPosition() {
     pauseText.SetPosition(startX, startY)
 }
 
+func DeletedResourceText(screen *tl.Screen, resourceType, resourceName, namespace string, startX, startY int) {
+    for _, entity := range deletedPodTextEntities {
+        screen.RemoveEntity(entity)
+    }
+    deletedPodTextEntities = nil
+    lines := []struct {
+        prefix string
+        value  string
+    }{
+        {"Resource: ", resourceType},
+        {"Name: ", resourceName},
+        {"Namespace: ", namespace},
+    }
+
+    generalMessage := "Oh no! Seems like the snake ate something.."
+    generalMessageEntity := tl.NewText(startX, startY, generalMessage, tl.ColorWhite, tl.ColorBlack)
+    screen.AddEntity(generalMessageEntity)
+    deletedPodTextEntities = append(deletedPodTextEntities, generalMessageEntity)
+
+    for i, line := range lines {
+        prefixEntity := tl.NewText(startX, startY+1+i, line.prefix, tl.ColorWhite, tl.ColorBlack)
+        valueEntity := tl.NewText(startX+len(line.prefix), startY+1+i, line.value, tl.ColorGreen, tl.ColorBlack)
+
+        screen.AddEntity(prefixEntity)
+        screen.AddEntity(valueEntity)
+
+        deletedPodTextEntities = append(deletedPodTextEntities, prefixEntity, valueEntity)
+    }
+}
+
 var score int
 
 func (snake *Snake) Tick(event tl.Event) {
@@ -192,13 +228,11 @@ func (snake *Snake) Tick(event tl.Event) {
         if isPaused {
             updatePauseTextPosition()
         } else {
-            // Move text off-screen when unpaused
             pauseText.SetPosition(-1, -1)
         }
-        return // Return early to avoid processing other inputs or game logic
+        return
     }
 
-    // If the game is paused, skip updating the game logic
     if isPaused {
         return
     }
@@ -248,14 +282,18 @@ func (snake *Snake) Tick(event tl.Event) {
             food.placed = false
             score++
             scoreText.SetText(fmt.Sprintf("Score: %d", score))
-
-            // Handle resource deletion linked to food
             for index, mapping := range foodPodMappings {
                 if mapping.foodEntity == food {
                     go k8s.DeleteResource(mapping.resourceInfo)
-                    deletionMessage := fmt.Sprintf("Oh no! Seems like you ate %s: %s in namespace %s", mapping.resourceInfo.Type, mapping.resourceInfo.Name, mapping.resourceInfo.Namespace)
-                    deletedPodText.SetText(deletionMessage)
-                    log.Println(deletionMessage)
+                    DeletedResourceText(
+                        game.Screen(),
+                        mapping.resourceInfo.Type,
+                        mapping.resourceInfo.Name,
+                        mapping.resourceInfo.Namespace,
+                        1,
+                        LevelHeight+0,
+                    )
+                    log.Printf("Chaos snake consumed %s: %s in namespace %s\n", mapping.resourceInfo.Type, mapping.resourceInfo.Name, mapping.resourceInfo.Namespace)
                     foodPodMappings = append(foodPodMappings[:index], foodPodMappings[index+1:]...)
                     break
                 }
