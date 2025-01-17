@@ -27,6 +27,7 @@ changelog:
 
 builds:
   - id: "chaossnake"
+    main: ./backend/main.go
     binary: chaossnake
     goos:
       - linux
