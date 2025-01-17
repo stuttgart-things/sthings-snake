@@ -3,11 +3,11 @@ class Serpent < Formula
   homepage "https://github.com/deggja/serpent"
 
   if OS.mac?
-    url "https://github.com/deggja/serpent/releases/download/3.1.0/serpent_3.1.0_darwin_amd64.tar.gz"
-    sha256 "7aa204a21c8fec041f8f18e9b686cf9bc115e3738e60a764baf6cfab92a663e2"
+    url "https://github.com/deggja/chaossnake/releases/download/v0.2.0/chaossnake_0.2.0_darwin_amd64.tar.gz"
+    sha256 "074e6eaeb51a871f9c8eb4e21358f855673308e1ea12c61e0f473f8e750f93cb"
   elsif OS.linux?
-    url "https://github.com/deggja/serpent/releases/download/3.1.0/serpent_3.1.0_linux_amd64.tar.gz"
-    sha256 "615de4c69ee013301937d9a47132b4d3221395d71b4f93d39550b23219e3eb1b"
+    url "https://github.com/deggja/chaossnake/releases/download/v0.2.0/chaossnake_0.2.0_linux_amd64.tar.gz"
+    sha256 "24f718845b7fbe72ea9b5cd70f3109d389a406601af40d73646672e856ceab60"
   end
 
   def install
