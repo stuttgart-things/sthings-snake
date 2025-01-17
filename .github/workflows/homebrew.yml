@@ -1,0 +1,105 @@
+name: Update Homebrew Formula
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to update Homebrew formula (e.g., v1.2.3)'
+        required: true
+        default: ''
+
+jobs:
+  update-homebrew:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract release version
+        id: extract_version
+        run: |
+            if [ "${{ github.event_name }}" == "release" ]; then
+                TAG="${{ github.event.release.tag_name }}"
+                VERSION="${TAG#v}"
+                echo "Using release tag: $TAG"
+            elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+                TAG="${{ github.event.inputs.tag }}"
+                VERSION="${TAG#v}"
+                echo "Using workflow_dispatch tag: $TAG"
+            else
+                echo "Unsupported event: $GITHUB_EVENT_NAME"
+                exit 1
+            fi
+            echo "VERSION=$VERSION" >> $GITHUB_ENV
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create temporary directory
+        run: mkdir temp
+
+      - name: Download macOS tarball
+        run: |
+          wget https://github.com/deggja/chaossnake/releases/download/v${{ env.VERSION }}/chaossnake_${{ env.VERSION }}_darwin_amd64.tar.gz -O temp/chaossnake_darwin_amd64.tar.gz
+
+      - name: Calculate macOS SHA256
+        run: |
+          SHA=$(sha256sum temp/chaossnake_darwin_amd64.tar.gz | awk '{print $1}')
+          echo "MACOS_SHA256=$SHA" >> $GITHUB_ENV
+
+      - name: Download Linux tarball
+        run: |
+          wget https://github.com/deggja/chaossnake/releases/download/v${{ env.VERSION }}/chaossnake_${{ env.VERSION }}_linux_amd64.tar.gz -O temp/chaossnake_linux_amd64.tar.gz
+
+      - name: Calculate Linux SHA256
+        run: |
+          SHA=$(sha256sum temp/chaossnake_linux_amd64.tar.gz | awk '{print $1}')
+          echo "LINUX_SHA256=$SHA" >> $GITHUB_ENV
+
+      - name: Update Homebrew Formula
+        run: |
+          FORMULA_FILE="formula/chaossnake.rb"
+          sed -i "s|url \".*darwin_amd64\.tar\.gz\"|url \"https://github.com/deggja/chaossnake/releases/download/v${{ env.VERSION }}/chaossnake_${{ env.VERSION }}_darwin_amd64.tar.gz\"|" $FORMULA_FILE
+          sed -i -E "/if OS\.mac\?/,/elsif OS\.linux\?/ s|sha256 \".*\"|sha256 \"${{ env.MACOS_SHA256 }}\"|" $FORMULA_FILE
+          sed -i "s|url \".*linux_amd64\.tar\.gz\"|url \"https://github.com/deggja/chaossnake/releases/download/v${{ env.VERSION }}/chaossnake_${{ env.VERSION }}_linux_amd64.tar.gz\"|" $FORMULA_FILE
+          sed -i -E "/elsif OS\.linux\?/,/end/ s|sha256 \".*\"|sha256 \"${{ env.LINUX_SHA256 }}\"|" $FORMULA_FILE
+
+      - name: Fetch Latest Changes from Main
+        run: |
+          git fetch origin main
+          git checkout main
+          git pull origin main
+    
+      - name: Remove temp directory
+        run: rm -rf temp
+
+      - name: Commit and Push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update homebrew formula for v${{ env.VERSION }}"
+          branch: chore/homebrew-${{ env.VERSION }}
+          create_branch: true
+          file_pattern: "formula/chaossnake.rb"
+          commit_user_name: "chaossnake Bot"
+          commit_author: "chaossnake Bot <bot@chaossnake.com>"
+          commit_user_email: "bot@chaossnake.com"
+
+      - name: Create Pull Request Using GitHub CLI
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --title "chore: update homebrew formula for v${{ env.VERSION }}" \
+            --body "This is an automated pull request. This pull request updates the Homebrew formula to version v${{ env.VERSION }} with the latest binary URLs and checksums." \
+            --base main \
+            --head chore/homebrew-${{ env.VERSION }} \
+            --label homebrew,automated \
+            --reviewer deggja \
