@@ -1,6 +1,7 @@
 module github.com/deggja/serpent
 
-go 1.21.5
+go 1.23.0
+
 toolchain go1.23.5
 
 require (
