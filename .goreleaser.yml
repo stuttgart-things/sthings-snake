@@ -1,6 +1,6 @@
 version: 2
 # .goreleaser.yml
-project_name: serpent
+project_name: chaossnake
 
 # Changelog Configuration
 changelog:
@@ -26,8 +26,8 @@ changelog:
       order: 4
 
 builds:
-  - id: "serpent"
-    binary: serpent
+  - id: "chaossnake"
+    binary: chaossnake
     goos:
       - linux
       - darwin
@@ -42,7 +42,7 @@ builds:
 archives:
   - id: "archive"
     builds:
-      - serpent
+      - chaossnake
     format: tar.gz
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     wrap_in_directory: true
