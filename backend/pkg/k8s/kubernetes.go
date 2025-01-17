@@ -18,15 +18,15 @@ import (
 	"k8s.io/client-go/util/homedir"
 )
 
-var resourceInfoQueue = make(chan ResourceInfo, 100)
+var ResourceInfoQueue = make(chan ResourceInfo, 100)
 
-func fetchResources() {
+func FetchResources() {
     for {
         resourceInfo, err := getRandomResourceInfo()
         if err != nil {
             log.Printf("Error fetching resource info: %s\n", err)
         } else {
-            resourceInfoQueue <- resourceInfo
+            ResourceInfoQueue <- resourceInfo
         }
         time.Sleep(1 * time.Second)
     }
@@ -298,11 +298,11 @@ var defaultConfig = Config{
 
 var gameConfig Config
 
-func setDefaultConfig() {
+func SetDefaultConfig() {
     gameConfig = defaultConfig
 }
 
-func loadConfigFromFile(filename string) error {
+func LoadConfigFromFile(filename string) error {
     data, err := os.ReadFile(filename)
     if err != nil {
         return err
@@ -376,7 +376,7 @@ type PodInfo struct {
 
 var clientset *kubernetes.Clientset
 
-func initKubeClient() {
+func InitKubeClient() {
 	var kubeconfig string
 	if kc := os.Getenv("KUBECONFIG"); kc != "" {
 		kubeconfig = kc
@@ -444,7 +444,7 @@ func isCriticalPod(pod v1.Pod) bool {
 	return isCritical
 }
 
-func deleteResource(resourceInfo ResourceInfo) {
+func DeleteResource(resourceInfo ResourceInfo) {
     var err error
     switch resourceInfo.Type {
     case "pod":
