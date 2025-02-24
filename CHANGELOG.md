@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/stuttgart-things/sthings-snake/compare/v1.0.0...v1.1.0) (2025-02-24)
+
+
+### Features
+
+* fix/fix-readme ([c3e03cc](https://github.com/stuttgart-things/sthings-snake/commit/c3e03ccc8879929b6cf6f2ceb6d79062643ffef9))
+
 # 1.0.0 (2025-02-24)
 
 
