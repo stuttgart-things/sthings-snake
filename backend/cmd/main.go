@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"math/rand"
@@ -9,7 +8,78 @@ import (
 	"time"
 
 	tl "github.com/JoelOtter/termloop"
-	"github.com/deggja/chaossnake/pkg/k8s"
+	"github.com/charmbracelet/huh"
+	"github.com/fatih/color"
+)
+
+var (
+	banner = `
+                   █▀ ▀█▀ █░█ █ █▄░█ █▀▀ █▀ ▄▄ █▀ █▄░█ ▄▀█ █▄▀ █▀▀
+                   ▄█ ░█░ █▀█ █ █░▀█ █▄█ ▄█ ░░ ▄█ █░▀█ █▀█ █░█ ██▄
+`
+
+	logo = `
+                       =-+                    @@@
+                       :.:                 @@%+:*@
+                        @+%              @%=.   .-%@
+                                      @@*.   ..   :#@
+                 @@@@          @@@%%@@=.    *@@#:  :*@@@@
+                 @+%+=#@@  @@@*----=#%%@+..  =@%%%%+-*@#-=*@@@
+                @*--+%---+@%%%%+----#%%%%%@#: .-@%%%%%%+---*%%@@@@@@@@@@@
+                @+----%+--=@%%%#----+%%@@@@%%%+..+@%%%*---#%@%+----*%#++%@
+                @=-----#+--=+**#####%@@@@%=:::: .*@%%%=-=#@*=--=#*=----=%@
+                @=------%-----------------+#- .+#==========---#+-------=@
+               @@#####*++===----------------=**=------------=*=--------*@
+              @%=..  ..::----====+++*****###**+++=====-------===++*####@@
+              @#*##*++++++=--::....         ..:::----=========--::.. ..+@
+    #=--=*@  @@##***************####**+++=+=++=++++=+=====----==++++*###@
+   *. .:=%   @#:  .:-=====++**#****************************************#@@
+   #-:-%     @%#*+===--:.....      ..:--==++++++++++++=+++++++=++++-:  :#@
+            @%+----+*-=+*#####*++====---::......               ....::--=%@
+           @@+-----#=-----++++++++======++*###%%%##**++++++++*#%%%#+=--=@
+           @@@@@@@@%-------=##@@@@@@@+-#*=%%@@@@@@@@%#%#+-------*+------#@
+          @@%%%%%%%#-------=%%@@@@@@@+.++-%#@@@@@@@#.-*---------%%%%%%%%@@
+         @@%%%%%%%%*-------+#@@@@@@@@*:+++*@@@@@@@@#:-*--------=%%%%%%%%%@@
+        @@@%%%%%%%%*-------*+@@@@@@@@+.*+*+@@@@@@@@#.-*--------+%%%%%%%%%%@
+        @@%%%%%%%%%*-------*=*@@@@@@%-.#=#-%@@@@@@@+.=*--------#%%%%%%%%%%@@    %%%%@
+       @#=--------=#-------+*:*@@@@*:.=*-*=-@@@@@@#..++--------%%%%%%%%%%%%@    %-. .=+
+      @%*----------%=-------+*..... .=*=--%:.:=+-...=#--------=%@@@@@@@@@@@@@     =. -+
+      @#-----------=#---------=*#%%#+=-----*#=....=#+---------*+-----------*@      ##
+     @%+------------**--------------*@@@@@+--=====------------#=-----------+%@
+     @@%#############@*--------------=%@*+-------------------=#=-----------=*@
+    @@@%%%%%%%%%%%%%%%@#------------*#-=#*-------------------+*-------------*@
+      @@%%%@%%@@@@%%%%@@%+--------=+=***#++----------------=#@%##############@@
+       @@@@%#%@%%%@%%%@  @%*===-------------------------+#%@@@%%%%%%%%%%%%%%@@@
+        @@##%@%%%%@@@@@@  @@%%@@@%*=---------------=**%@@   @@%%%%%%%%%%%@@@
+      @@@%#%@%%%%*=*=-+##@@##%@%%%%%*+++++++++++*#*=--=*@@  @@%%%%@@@@@@@
+    @@%#%##%%%%#=-*--*+-=@##%@%%%%%%+---------------==--=#@ @@%@%%%@%##%@
+    @@*%%#%%%%@+--------%###@%%%%%%@+----------=#@@@%%%*--*@@@@%%%%%@%##%@
+    @@%%##%@%%%=-------+@##%@%%@@@@@*---------=@%%%%@##%##%@%**=#%%%%@%##@@@
+      @@##%@%%%=-------#%##@%%%+++###*--------#%%%%%%@##%*-=+--*=-+@%%@##%%#@@
+      @@##%@%%%@+------@##%@%%%++*#*#*--------@%%%%%%%%##%+--=-----%%%@%##%*#@
+      @@%#%@%%%%%@@%+--@##%@%%%@@@@@#=--------@%%%%%%%%%#%#=-------+@%%@##%##@
+       @@%#@%%%%@@     @%#%@%%%%%%#=---------@%%+++#%%%%##%+-------+@%%@##%@
+         @@@@@@@@      @@##@%%%%%%+---------=%+##++*%%%%##@+------=@%%%@##%@
+                        @@%%@%%%#=-----------#*##*%@%%%%##%+---*%%%%%%%@##@@@
+                        @%-==++=--------------=*@%%%%%%%##@@@@@@#@%%%%@%#@@@
+                         @----------------------#%%%%%%%#%@@  @+--+@@@@@@@
+                         @=----------------------*@%%%@%%@@  @*--#@@
+                         @+-----------------------=+*++=*%@  @+-+@
+                         @#-----------------------------*@   @+-+@
+                         @%=------------#+--------------*%@@ @*-=@
+                          @%-------------%+------------=*+=*#*==*@
+                          @%+------------%@+-----------+%@*+++#@@
+                           @%-----------=%@@=----------+@  @@@
+                           @%=----------+% @%----------*@
+                           @%*----------#@  @*---------*@
+                            @#---------=%@   @---------*@
+                       @@%#%@%*--------*%@   @#--------*@@@@@@@
+                     @#----------------%@     @--------++------#@
+                     @----------------#@      @*----------------%@
+                     @=-------------*%@        @*---------------%@
+                      @%#+===+*#%@@@@           @@@@%#*=------+#@
+                         @@@@@@                       @@@@@@@@@
+`
 )
 
 type Coordinates struct {
@@ -26,14 +96,6 @@ type Snake struct {
 type Food struct {
 	*tl.Entity
 	placed bool
-}
-
-var foodPodMappings []FoodPodMapping
-var deletedPodTextEntities []*tl.Text
-
-type FoodPodMapping struct {
-    foodEntity   *Food
-    resourceInfo k8s.ResourceInfo
 }
 
 const (
@@ -65,17 +127,6 @@ func (f *Food) PlaceFood(levelWidth, levelHeight int) {
 	foodY := rand.Intn(LevelHeight-4) + 2
 
 	f.SetPosition(foodX, foodY)
-
-	// Get a random resource name and namespace to associate with this food
-	select {
-    case resourceInfo := <-k8s.ResourceInfoQueue:
-        foodPodMappings = append(foodPodMappings, FoodPodMapping{
-            foodEntity: f,
-            resourceInfo:    resourceInfo,
-        })
-    default:
-        log.Println("No resource info available at the moment.")
-    }
 }
 
 func (f *Food) Draw(screen *tl.Screen) {
@@ -120,11 +171,6 @@ func (snake *Snake) CollidesWithSelf() bool {
 }
 
 func GameOver() {
-    for _, entity := range deletedPodTextEntities {
-        game.Screen().RemoveEntity(entity)
-    }
-    deletedPodTextEntities = nil
-    
 	showFinalScreen()
 	log.Println("Game Over!")
 }
@@ -150,246 +196,183 @@ func (snake *Snake) Draw(screen *tl.Screen) {
 }
 
 func showFinalScreen() {
-    // Set up a blank level to display end game information
-    blankLevel := tl.NewBaseLevel(tl.Cell{
-        Bg: tl.ColorBlack,  // Background color of the level
-        Ch: ' ',            // Character to fill the screen with
-    })
-    game.Screen().SetLevel(blankLevel)
+	// Set up a blank level to display end game information
+	blankLevel := tl.NewBaseLevel(tl.Cell{
+		Bg: tl.ColorBlack, // Background color of the level
+		Ch: ' ',           // Character to fill the screen with
+	})
+	game.Screen().SetLevel(blankLevel)
 
-    // Create the final score message
-    finalMessage := fmt.Sprintf("Final Score: %d", score)
-    messageLength := len(finalMessage)
-    startX := (LevelWidth / 2) - (messageLength / 2)
-    startY := LevelHeight / 2 - 1  // Positioned slightly above center for multiple lines
+	// Create the final score message
+	finalMessage := fmt.Sprintf("Final Score: %d", score)
+	messageLength := len(finalMessage)
+	startX := (LevelWidth / 2) - (messageLength / 2)
+	startY := LevelHeight/2 - 1 // Positioned slightly above center for multiple lines
 
-    finalScoreText := tl.NewText(startX, startY, finalMessage, tl.ColorWhite, tl.ColorBlack)
-    blankLevel.AddEntity(finalScoreText)
+	finalScoreText := tl.NewText(startX, startY, finalMessage, tl.ColorWhite, tl.ColorBlack)
+	blankLevel.AddEntity(finalScoreText)
 
-    // Instructions for restarting or quitting
-    restartMessage := "Press CTRL+C to QUIT"
-    restartX := (LevelWidth / 2) - (len(restartMessage) / 2)
-    restartY := startY + 2
+	// Instructions for restarting or quitting
+	restartMessage := "Press CTRL+C to QUIT"
+	restartX := (LevelWidth / 2) - (len(restartMessage) / 2)
+	restartY := startY + 2
 
-    restartText := tl.NewText(restartX, restartY, restartMessage, tl.ColorWhite, tl.ColorBlack)
-    blankLevel.AddEntity(restartText)
+	restartText := tl.NewText(restartX, restartY, restartMessage, tl.ColorWhite, tl.ColorBlack)
+	blankLevel.AddEntity(restartText)
 
-    game.Screen().Draw()
-}
-
-func updatePauseTextPosition() {
-    message := "Game paused. Press space to resume or CTRL+C to quit."
-    messageLength := len(message)
-    
-    // Center horizontally
-    startX := (LevelWidth / 2) - (messageLength / 2)
-    // Center vertically
-    startY := LevelHeight / 2
-    
-    pauseText.SetPosition(startX, startY)
-}
-
-func DeletedResourceText(screen *tl.Screen, resourceType, resourceName, namespace string, startX, startY int) {
-    for _, entity := range deletedPodTextEntities {
-        screen.RemoveEntity(entity)
-    }
-    deletedPodTextEntities = nil
-    lines := []struct {
-        prefix string
-        value  string
-    }{
-        {"Resource: ", resourceType},
-        {"Name: ", resourceName},
-        {"Namespace: ", namespace},
-    }
-
-    generalMessage := "Oh no! Seems like the snake ate something.."
-    generalMessageEntity := tl.NewText(startX, startY, generalMessage, tl.ColorWhite, tl.ColorBlack)
-    screen.AddEntity(generalMessageEntity)
-    deletedPodTextEntities = append(deletedPodTextEntities, generalMessageEntity)
-
-    for i, line := range lines {
-        prefixEntity := tl.NewText(startX, startY+1+i, line.prefix, tl.ColorWhite, tl.ColorBlack)
-        valueEntity := tl.NewText(startX+len(line.prefix), startY+1+i, line.value, tl.ColorGreen, tl.ColorBlack)
-
-        screen.AddEntity(prefixEntity)
-        screen.AddEntity(valueEntity)
-
-        deletedPodTextEntities = append(deletedPodTextEntities, prefixEntity, valueEntity)
-    }
+	game.Screen().Draw()
 }
 
 var score int
 
 func (snake *Snake) Tick(event tl.Event) {
-    // Check for pause toggle first
-    if event.Type == tl.EventKey && event.Key == tl.KeySpace {
-        isPaused = !isPaused
-        if isPaused {
-            updatePauseTextPosition()
-        } else {
-            pauseText.SetPosition(-1, -1)
-        }
-        return
-    }
+	// Handle direction change input
+	if event.Type == tl.EventKey {
+		switch event.Key {
+		case tl.KeyArrowRight:
+			if snake.direction != "left" {
+				snake.direction = "right"
+			}
+		case tl.KeyArrowLeft:
+			if snake.direction != "right" {
+				snake.direction = "left"
+			}
+		case tl.KeyArrowUp:
+			if snake.direction != "down" {
+				snake.direction = "up"
+			}
+		case tl.KeyArrowDown:
+			if snake.direction != "up" {
+				snake.direction = "down"
+			}
+		}
+	}
 
-    if isPaused {
-        return
-    }
+	// Update snake every two ticks
+	snake.tickCount++
+	if snake.tickCount >= 2 {
+		snake.tickCount = 0
+		newHead := snake.body[0]
+		// Move head based on the current direction
+		switch snake.direction {
+		case "right":
+			newHead.X += 2
+		case "left":
+			newHead.X -= 2
+		case "up":
+			newHead.Y -= 1
+		case "down":
+			newHead.Y += 1
+		}
 
-    // Handle direction change input
-    if event.Type == tl.EventKey {
-        switch event.Key {
-        case tl.KeyArrowRight:
-            if snake.direction != "left" {
-                snake.direction = "right"
-            }
-        case tl.KeyArrowLeft:
-            if snake.direction != "right" {
-                snake.direction = "left"
-            }
-        case tl.KeyArrowUp:
-            if snake.direction != "down" {
-                snake.direction = "up"
-            }
-        case tl.KeyArrowDown:
-            if snake.direction != "up" {
-                snake.direction = "down"
-            }
-        }
-    }
+		// Check for food collision
+		if food.AtPosition(newHead.X, newHead.Y) {
+			snake.growth += 1
+			food.placed = false
+			score++
+			scoreText.SetText(fmt.Sprintf("Score: %d", score))
+			fmt.Println("Yum! Something was eaten!") // Print message when food is eaten
+		}
 
-    // Update snake every two ticks
-    snake.tickCount++
-    if snake.tickCount >= 2 {
-        snake.tickCount = 0
-        newHead := snake.body[0]
-        // Move head based on the current direction
-        switch snake.direction {
-        case "right":
-            newHead.X += 2
-        case "left":
-            newHead.X -= 2
-        case "up":
-            newHead.Y -= 1
-        case "down":
-            newHead.Y += 1
-        }
+		// Grow the snake if needed
+		if snake.growth > 0 {
+			snake.body = append([]Coordinates{newHead}, snake.body...)
+			snake.growth--
+		} else {
+			snake.body = append([]Coordinates{newHead}, snake.body[:len(snake.body)-1]...)
+		}
 
-        // Check for food collision
-        if food.AtPosition(newHead.X, newHead.Y) {
-            snake.growth += 1
-            food.placed = false
-            score++
-            scoreText.SetText(fmt.Sprintf("Score: %d", score))
-            for index, mapping := range foodPodMappings {
-                if mapping.foodEntity == food {
-                    go k8s.DeleteResource(mapping.resourceInfo)
-                    DeletedResourceText(
-                        game.Screen(),
-                        mapping.resourceInfo.Type,
-                        mapping.resourceInfo.Name,
-                        mapping.resourceInfo.Namespace,
-                        1,
-                        LevelHeight+0,
-                    )
-                    log.Printf("Chaos snake consumed %s: %s in namespace %s\n", mapping.resourceInfo.Type, mapping.resourceInfo.Name, mapping.resourceInfo.Namespace)
-                    foodPodMappings = append(foodPodMappings[:index], foodPodMappings[index+1:]...)
-                    break
-                }
-            }
-        }
-
-        // Grow the snake if needed
-        if snake.growth > 0 {
-            snake.body = append([]Coordinates{newHead}, snake.body...)
-            snake.growth--
-        } else {
-            snake.body = append([]Coordinates{newHead}, snake.body[:len(snake.body)-1]...)
-        }
-
-        // Check for collision with walls or self
-        if snake.CollidesWithWalls() || snake.CollidesWithSelf() {
-            GameOver()
-        }
-    }
+		// Check for collision with walls or self
+		if snake.CollidesWithWalls() || snake.CollidesWithSelf() {
+			GameOver()
+		}
+	}
 }
 
 var food *Food
 var game *tl.Game
 var scoreText *tl.Text
-var deletedPodText *tl.Text
-var isPaused bool = false
-var pauseText *tl.Text
 
-func main() {
-    configFilePath := flag.String("config", "", "Path to configuration file")
-    flag.Parse()
+func showMenu() string {
+	color.Yellow(logo)
+	color.Green(banner)
 
-    k8s.SetDefaultConfig()
+	// Create a huh form for the menu
+	var choice string
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Choose an option").
+				Options(
+					huh.NewOption("Start Game", "start"),
+					huh.NewOption("Exit", "exit"),
+				).
+				Value(&choice),
+		),
+	)
 
-    // Load configuration from the specified file if provided
-    if *configFilePath != "" {
-        err := k8s.LoadConfigFromFile(*configFilePath)
-        if err != nil {
-            log.Fatalf("Failed to load config file: %s", err)
-        }
-    }
+	// Run the form
+	err := form.Run()
+	if err != nil {
+		fmt.Println("Error running form:", err)
+		os.Exit(1)
+	}
 
-    // init k8s client
-    k8s.InitKubeClient()
+	// Handle the user's choice
+	if choice == "exit" {
+		fmt.Println("Goodbye!")
+		os.Exit(0)
+	}
 
-    // Start fetching resources to avoid lag during gameplay
-    go k8s.FetchResources()
+	// Create a huh form for the player's name
+	var playerName string
+	nameForm := huh.NewForm(
+		huh.NewGroup(
+			huh.NewInput().
+				Title("Enter your name").
+				Value(&playerName),
+		),
+	)
 
-    logFile, err := os.OpenFile("chaos.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-    if err != nil {
-        log.Fatal(err)
-    }
-    defer logFile.Close()
+	// Run the name form
+	err = nameForm.Run()
+	if err != nil {
+		fmt.Println("Error running name form:", err)
+		os.Exit(1)
+	}
 
-    log.SetOutput(logFile)
-
-    game = tl.NewGame()
-    game.Screen().SetFps(30)
-
-    level := tl.NewBaseLevel(tl.Cell{
-        Bg: tl.ColorBlack,
-        Fg: tl.ColorWhite,
-        Ch: ' ',
-    })
-
-    snake := NewSnake(20, 20)
-    food = NewFood()
-
-    // Ensure the first food has pod info ready
-    foodX := rand.Intn(LevelWidth-4) + 2
-    foodY := rand.Intn(LevelHeight-4) + 2
-    food.SetPosition(foodX, foodY)
-
-    select {
-    case resourceInfo := <-k8s.ResourceInfoQueue:
-        foodPodMappings = append(foodPodMappings, FoodPodMapping{
-            foodEntity: food,
-            resourceInfo: resourceInfo,
-        })
-        food.placed = true
-    case <-time.After(10 * time.Second): // Wait up to 10 seconds
-        log.Fatal("Failed to fetch initial pod info in time")
-    }
-
-    level.AddEntity(snake)
-    level.AddEntity(food)
-
-    scoreText = tl.NewText(1, 0, "Score: 0", tl.ColorWhite, tl.ColorBlack)
-    deletedPodText = tl.NewText(1, LevelHeight, "", tl.ColorWhite, tl.ColorBlack)
-    level.AddEntity(scoreText)
-    level.AddEntity(deletedPodText)
-
-	pauseText = tl.NewText(-1, -1, "GAME PAUSED. Press space to RESUME or CTRL+C to QUIT.", tl.ColorWhite, tl.ColorBlack)
-	game.Screen().AddEntity(pauseText)
-
-    game.Screen().SetLevel(level)
-    game.Start()
+	fmt.Printf("Hello, %s! Get ready to play!\n", playerName)
+	return playerName
 }
 
+func main() {
+	playerName := showMenu()
+	fmt.Println(playerName)
+
+	game = tl.NewGame()
+	game.Screen().SetFps(30)
+
+	level := tl.NewBaseLevel(tl.Cell{
+		Bg: tl.ColorBlack,
+		Fg: tl.ColorWhite,
+		Ch: ' ',
+	})
+
+	snake := NewSnake(20, 20)
+	food = NewFood()
+
+	// Place the first food
+	foodX := rand.Intn(LevelWidth-4) + 2
+	foodY := rand.Intn(LevelHeight-4) + 2
+	food.SetPosition(foodX, foodY)
+	food.placed = true
+
+	level.AddEntity(snake)
+	level.AddEntity(food)
+
+	scoreText = tl.NewText(1, 0, "Score: 0", tl.ColorWhite, tl.ColorBlack)
+	level.AddEntity(scoreText)
+
+	game.Screen().SetLevel(level)
+	game.Start()
+}
