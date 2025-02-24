@@ -1,57 +1,40 @@
+---
 version: 2
-# .goreleaser.yml
-project_name: chaossnake
-
-# Changelog Configuration
-changelog:
-  sort: desc
-  filters:
-    exclude:
-      - '^Merge pull request'
-  groups:
-    - title: Features
-      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
-      order: 0
-    - title: "Bug fixes"
-      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
-      order: 1
-    - title: "Documentation Updates"
-      regexp: '^.*?docs(\([[:word:]]+\))??!?:.+$'
-      order: 2
-    - title: "Other Changes"
-      regexp: "^(ci|build|misc|perf|deps):"
-      order: 3
-    - title: "Miscellaneous"
-      regexp: ".*"
-      order: 4
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
 
 builds:
-  - id: "chaossnake"
-    main: ./cmd/main.go
-    dir: ./backend
-    binary: chaossnake
+  - binary: sthings-snake
+    main: ./backend/cmd
     goos:
       - linux
-      - darwin
-      - windows
-    goarch:
-      - amd64
-      - arm64
-    ignore:
-      - goos: darwin
-        goarch: arm64
+    env:
+      - CGO_ENABLED=0
 
 archives:
-  - id: "archive"
-    builds:
-      - chaossnake
-    format: tar.gz
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-    wrap_in_directory: true
+  - formats: [ 'tar.gz' ]
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    # use zip for windows archives
 
-# Release configuration
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
 release:
-  github:
-    owner: deggja
-    name: chaossnake
-  draft: false
+  footer: >-
+
+    ---
+
+    Released by [GoReleaser](https://github.com/goreleaser/goreleaser).

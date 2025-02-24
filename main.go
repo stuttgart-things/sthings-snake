@@ -78,8 +78,7 @@ var (
                      @----------------#@      @*----------------%@
                      @=-------------*%@        @*---------------%@
                       @%#+===+*#%@@@@           @@@@%#*=------+#@
-                         @@@@@@                       @@@@@@@@@
-`
+                         @@@@@@                       @@@@@@@@@`
 )
 
 type Coordinates struct {
@@ -294,8 +293,13 @@ var game *tl.Game
 var scoreText *tl.Text
 
 func showMenu() string {
-	color.Yellow(logo)
-	color.Green(banner)
+	// color.Yellow(logo)
+	color.RGB(255, 128, 0).AddBgRGB(0, 0, 0).Println(logo)
+
+	// orange := color.RGB(255, 128, 0).Println("foreground orange")
+	color.RGB(255, 128, 0).AddBgRGB(0, 0, 0).Println(banner)
+
+	// color.orange(banner)
 
 	// Create a huh form for the menu
 	var choice string
@@ -370,8 +374,21 @@ func main() {
 	level.AddEntity(snake)
 	level.AddEntity(food)
 
+	// Display Score
 	scoreText = tl.NewText(1, 0, "Score: 0", tl.ColorWhite, tl.ColorBlack)
 	level.AddEntity(scoreText)
+
+	// Render Banner on the Right Side
+	bannerLines := []string{
+		"█▀ ▀█▀ █░█ █ █▄░█ █▀▀ █▀",
+		"▄█ ░█░ █▀█ █ █░▀█ █▄█ ▄█",
+	}
+
+	for i, line := range bannerLines {
+		xPos := LevelWidth - len(line) + 12 // Align to the right with some margin
+		bannerText := tl.NewText(xPos, i, line, tl.ColorYellow, tl.ColorBlack)
+		level.AddEntity(bannerText)
+	}
 
 	game.Screen().SetLevel(level)
 	game.Start()
