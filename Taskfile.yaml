@@ -125,4 +125,4 @@ tasks:
   run:
     desc: Run the Go project
     cmds:
-      - go run ./cmd/sthingsTetris/ {{.CLI_ARGS}}
+      - go run main.go
