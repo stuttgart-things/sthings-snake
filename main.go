@@ -5,11 +5,14 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"strconv"
 	"time"
 
 	tl "github.com/JoelOtter/termloop"
 	"github.com/charmbracelet/huh"
 	"github.com/fatih/color"
+
+	"github.com/stuttgart-things/homerun-library"
 )
 
 var (
@@ -210,7 +213,8 @@ func (snake *Snake) Tick(event tl.Event) {
 			food.placed = false
 			score++
 			scoreText.SetText(fmt.Sprintf("Score: %d", score))
-			fmt.Println("Yum! Something was eaten!") // Print message when food is eaten
+			score_string := strconv.Itoa(score)
+			sendNotificationToHomerun(playerName, severityPreFix, score_string, homerunAddr, homerunToken)
 		}
 
 		// Grow the snake if needed
@@ -289,6 +293,30 @@ func showMenu() string {
 	return playerName
 }
 
+func sendNotificationToHomerun(playerName string, severityPreFix string, score_string string, homerunAddr string, homerunToken string) {
+
+	dt := time.Now()
+	messageBody := homerun.Message{
+		Title:           fmt.Sprintf("STHINGS-SNAKE: Score %d", score_string),
+		Message:         score_string,
+		Severity:        severityPreFix,
+		Author:          playerName,
+		Timestamp:       dt.Format("01-02-2006 15:04:05"),
+		System:          "sthings-tetris",
+		Tags:            "sthings-tetris,score,chaos",
+		AssigneeAddress: "",
+		AssigneeName:    "",
+		Artifacts:       "",
+		Url:             "",
+	}
+
+	rendered := homerun.RenderBody(homerun.HomeRunBodyData, messageBody)
+
+	// comment next line and uncomment Print answer lines to debug
+	homerun.SendToHomerun(homerunAddr, homerunToken, []byte(rendered), false)
+
+}
+
 func main() {
 	playerName := showMenu()
 	fmt.Println(playerName)
@@ -304,6 +332,9 @@ func main() {
 
 	snake := NewSnake(20, 20)
 	food = NewFood()
+	severityPreFix := os.Getenv("HOMERUN_SEVERITY_PREFIX")
+	homerunAddr = os.Getenv("HOMERUN_ADDR")
+	homerunToken = os.Getenv("HOMERUN_TOKEN")
 
 	// Place the first food
 	foodX := rand.Intn(LevelWidth-4) + 2
