@@ -1,3 +1,13 @@
+# [1.2.0](https://github.com/stuttgart-things/sthings-snake/compare/v1.1.0...v1.2.0) (2025-02-26)
+
+
+### Features
+
+* feature/add-homerun-message ([9b0ff9f](https://github.com/stuttgart-things/sthings-snake/commit/9b0ff9fc3665b8db2de6c674b72c0ccb0ea2a5bc))
+* feature/add-homerun-message ([b0a4899](https://github.com/stuttgart-things/sthings-snake/commit/b0a48995ac136d2c687e87a9bfc54160fdb42b07))
+* feature/add-homerun-message ([c82addd](https://github.com/stuttgart-things/sthings-snake/commit/c82addd25302a16554d2e62f67c344e7067786e1))
+* main ([36a1c5a](https://github.com/stuttgart-things/sthings-snake/commit/36a1c5a56b33411ce0ab399dc30e2c44f8931031))
+
 # [1.1.0](https://github.com/stuttgart-things/sthings-snake/compare/v1.0.0...v1.1.0) (2025-02-24)
 
 
