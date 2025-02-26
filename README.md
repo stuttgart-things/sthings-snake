@@ -17,7 +17,7 @@ sthings-snake
 <details><summary>BY GITHUB RELEASE</summary>
 
 ```bash
-VERSION=v1.1.0
+VERSION=v1.2.1
 BIN_DIR=/usr/bin
 cd /tmp && wget https://github.com/stuttgart-things/sthings-snake/releases/download/${VERSION}/sthings-snake_Linux_x86_64.tar.gz
 tar xvfz sthings-snake_Linux_x86_64.tar.gz
