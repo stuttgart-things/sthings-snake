@@ -29,10 +29,14 @@ type Coordinates struct {
 }
 
 type Snake struct {
-	body      []Coordinates
-	direction string
-	tickCount int
-	growth    int
+	body           []Coordinates
+	direction      string
+	tickCount      int
+	growth         int
+	playerName     string
+	severityPreFix string
+	homerunAddr    string
+	homerunToken   string
 }
 
 type Food struct {
@@ -117,11 +121,15 @@ func GameOver() {
 	log.Println("Game Over!")
 }
 
-func NewSnake(x, y int) *Snake {
+func NewSnake(x, y int, playerName string, severityPreFix string, homerunAddr string, homerunToken string) *Snake {
 	snake := &Snake{
-		direction: "right",
-		tickCount: 0,
-		growth:    0,
+		direction:      "right",
+		tickCount:      0,
+		growth:         0,
+		playerName:     playerName,
+		severityPreFix: severityPreFix,
+		homerunAddr:    homerunAddr,
+		homerunToken:   homerunToken,
 	}
 	// Initialize snake with 3 segments
 	for i := 0; i < 3; i++ {
@@ -214,7 +222,7 @@ func (snake *Snake) Tick(event tl.Event) {
 			score++
 			scoreText.SetText(fmt.Sprintf("Score: %d", score))
 			score_string := strconv.Itoa(score)
-			sendNotificationToHomerun(playerName, severityPreFix, score_string, homerunAddr, homerunToken)
+			sendNotificationToHomerun(snake.playerName, snake.severityPreFix, score_string, snake.homerunAddr, snake.homerunToken)
 		}
 
 		// Grow the snake if needed
@@ -302,8 +310,8 @@ func sendNotificationToHomerun(playerName string, severityPreFix string, score_s
 		Severity:        severityPreFix,
 		Author:          playerName,
 		Timestamp:       dt.Format("01-02-2006 15:04:05"),
-		System:          "sthings-tetris",
-		Tags:            "sthings-tetris,score,chaos",
+		System:          "sthings-snake",
+		Tags:            "sthings-snake,score,chaos",
 		AssigneeAddress: "",
 		AssigneeName:    "",
 		Artifacts:       "",
@@ -320,6 +328,9 @@ func sendNotificationToHomerun(playerName string, severityPreFix string, score_s
 func main() {
 	playerName := showMenu()
 	fmt.Println(playerName)
+	severityPreFix := os.Getenv("HOMERUN_SEVERITY_PREFIX")
+	homerunAddr := os.Getenv("HOMERUN_ADDR")
+	homerunToken := os.Getenv("HOMERUN_TOKEN")
 
 	game = tl.NewGame()
 	game.Screen().SetFps(30)
@@ -330,11 +341,8 @@ func main() {
 		Ch: ' ',
 	})
 
-	snake := NewSnake(20, 20)
+	snake := NewSnake(20, 20, playerName, severityPreFix, homerunAddr, homerunToken)
 	food = NewFood()
-	severityPreFix := os.Getenv("HOMERUN_SEVERITY_PREFIX")
-	homerunAddr = os.Getenv("HOMERUN_ADDR")
-	homerunToken = os.Getenv("HOMERUN_TOKEN")
 
 	// Place the first food
 	foodX := rand.Intn(LevelWidth-4) + 2
