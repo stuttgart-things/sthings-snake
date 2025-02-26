@@ -126,3 +126,8 @@ tasks:
     desc: Run the Go project
     cmds:
       - go run main.go
+    env:
+      LOG_PATH: "/tmp/snake.log"
+      HOMERUN_SEVERITY_PREFIX: CHAOS
+      HOMERUN_TOKEN: "{{ .HOMERUN_TOKEN }}"
+      HOMERUN_ADDR: "{{ .HOMERUN_ADDR }}"

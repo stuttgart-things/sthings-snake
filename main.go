@@ -7,6 +7,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/stuttgart-things/homerun-library"
+
 	tl "github.com/JoelOtter/termloop"
 	"github.com/charmbracelet/huh"
 	"github.com/fatih/color"
@@ -19,6 +21,12 @@ var (
 	▄█ ░█░ █▀█ █ █░▀█ █▄█ ▄█ ░░ ▄█ █░▀█ █▀█ █░█ ██▄
 
 	`
+	insecure       = true
+	dt             = time.Now()
+	homerunAddr    = os.Getenv("HOMERUN_ADDR")
+	homerunToken   = os.Getenv("HOMERUN_TOKEN")
+	logPath        = os.Getenv("LOG_PATH")
+	severityPreFix = os.Getenv("HOMERUN_SEVERITY_PREFIX")
 )
 
 type Coordinates struct {
@@ -210,7 +218,7 @@ func (snake *Snake) Tick(event tl.Event) {
 			food.placed = false
 			score++
 			scoreText.SetText(fmt.Sprintf("Score: %d", score))
-			fmt.Println("Yum! Something was eaten!") // Print message when food is eaten
+			sendNotificationToHomerun("pat")
 		}
 
 		// Grow the snake if needed
@@ -332,4 +340,32 @@ func main() {
 
 	game.Screen().SetLevel(level)
 	game.Start()
+}
+
+func sendNotificationToHomerun(playerName string) {
+
+	dt := time.Now()
+	messageBody := homerun.Message{
+		Title:           "sthings-snake",
+		Message:         "sthings-snake",
+		Severity:        severityPreFix,
+		Author:          playerName,
+		Timestamp:       dt.Format("01-02-2006 15:04:05"),
+		System:          "sthings-snake",
+		Tags:            "sthings-snake,score,chaos",
+		AssigneeAddress: "",
+		AssigneeName:    "",
+		Artifacts:       "",
+		Url:             "",
+	}
+
+	rendered := homerun.RenderBody(homerun.HomeRunBodyData, messageBody)
+
+	// comment next line and uncomment Print answer lines to debug
+	homerun.SendToHomerun(homerunAddr, homerunToken, []byte(rendered), insecure)
+
+	// Print the answer for debugging purposes
+	//answer, resp := homerun.SendToHomerun(homerunAddr, token, []byte(rendered), insecure)
+	//fmt.Println("ANSWER STATUS: ", resp.Status)
+	//fmt.Println("ANSWER BODY: ", string(answer))
 }
