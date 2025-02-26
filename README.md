@@ -5,7 +5,12 @@ Based on [chaossnake](https://github.com/deggja/chaossnake) - @deggja thank you 
 
 ## USAGE
 
-## DEPLOYMENT
+```bash
+export HOMERUN_TOKEN=""
+export HOMERUN_ADDR="https://homerun.homerun-dev.."
+
+sthings-snake
+```
 
 ## DEPLOYMENT
 
@@ -24,8 +29,21 @@ cd -
 
 </details>
 
-
 ## DEV
+
+<details><summary>CREATE ENV FILE</summary>
+
+.env file needed for Taskfile
+
+```bash
+cat <<EOF > .env
+HOMERUN_TOKEN=""
+HOMERUN_ADDR="https://homerun.homerun-dev..."
+EOF
+```
+
+</details>
+
 
 ```bash
 task: Available tasks for this project:
