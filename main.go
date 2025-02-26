@@ -42,7 +42,8 @@ type Snake struct {
 
 type Food struct {
 	*tl.Entity
-	placed bool
+	placed     bool
+	playerName string
 }
 
 const (
@@ -50,7 +51,7 @@ const (
 	LevelHeight = 24
 )
 
-func NewFood() *Food {
+func NewFood(playerName string) *Food {
 	return &Food{
 		Entity: tl.NewEntityFromCanvas(2, 2, tl.CanvasFromString("O")),
 		placed: false,
@@ -85,8 +86,11 @@ func (f *Food) Draw(screen *tl.Screen) {
 
 func (f *Food) AtPosition(x, y int) bool {
 	foodX, foodY := f.Position()
-	// Check for collision in a wider range for X to accommodate faster horizontal movement
-	return (x == foodX || x == foodX-1 || x == foodX+1) && y == foodY
+	if (x == foodX || x == foodX-1 || x == foodX+1) && y == foodY {
+		sendNotificationToHomerun(f.playerName, score)
+		return true
+	}
+	return false
 }
 
 func drawWalls(screen *tl.Screen) {
@@ -118,8 +122,51 @@ func (snake *Snake) CollidesWithSelf() bool {
 }
 
 func GameOver() {
-	showFinalScreen()
 	log.Println("Game Over!")
+	playerName := showMenu() // Immediately show the menu
+	startGame(playerName)    // Restart game loop with new player
+}
+
+func startGame(playerName string) {
+	game = tl.NewGame()
+	game.Screen().SetFps(30)
+
+	level := tl.NewBaseLevel(tl.Cell{
+		Bg: tl.ColorBlack,
+		Fg: tl.ColorWhite,
+		Ch: ' ',
+	})
+
+	snake := NewSnake(20, 20)
+	food = NewFood(playerName)
+
+	// Place initial food
+	foodX := rand.Intn(LevelWidth-4) + 2
+	foodY := rand.Intn(LevelHeight-4) + 2
+	food.SetPosition(foodX, foodY)
+	food.placed = true
+
+	level.AddEntity(snake)
+	level.AddEntity(food)
+
+	// Render Banner on the Right Side
+	bannerLines := []string{
+		"█▀ ▀█▀ █░█ █ █▄░█ █▀▀ █▀",
+		"▄█ ░█░ █▀█ █ █░▀█ █▄█ ▄█",
+	}
+
+	for i, line := range bannerLines {
+		xPos := LevelWidth - len(line) + 12 // Align to the right with some margin
+		bannerText := tl.NewText(xPos, i, line, tl.ColorYellow, tl.ColorBlack)
+		level.AddEntity(bannerText)
+	}
+
+	// Display Score
+	scoreText = tl.NewText(1, 0, "Score: 0", tl.ColorWhite, tl.ColorBlack)
+	level.AddEntity(scoreText)
+
+	game.Screen().SetLevel(level)
+	game.Start()
 }
 
 func NewSnake(x, y int) *Snake {
@@ -218,7 +265,7 @@ func (snake *Snake) Tick(event tl.Event) {
 			food.placed = false
 			score++
 			scoreText.SetText(fmt.Sprintf("Score: %d", score))
-			sendNotificationToHomerun("pat")
+			// sendNotificationToHomerun("pat")
 		}
 
 		// Grow the snake if needed
@@ -299,7 +346,7 @@ func showMenu() string {
 
 func main() {
 	playerName := showMenu()
-	fmt.Println(playerName)
+	startGame(playerName)
 
 	game = tl.NewGame()
 	game.Screen().SetFps(30)
@@ -311,7 +358,7 @@ func main() {
 	})
 
 	snake := NewSnake(20, 20)
-	food = NewFood()
+	food = NewFood(playerName)
 
 	// Place the first food
 	foodX := rand.Intn(LevelWidth-4) + 2
@@ -326,28 +373,15 @@ func main() {
 	scoreText = tl.NewText(1, 0, "Score: 0", tl.ColorWhite, tl.ColorBlack)
 	level.AddEntity(scoreText)
 
-	// Render Banner on the Right Side
-	bannerLines := []string{
-		"█▀ ▀█▀ █░█ █ █▄░█ █▀▀ █▀",
-		"▄█ ░█░ █▀█ █ █░▀█ █▄█ ▄█",
-	}
-
-	for i, line := range bannerLines {
-		xPos := LevelWidth - len(line) + 12 // Align to the right with some margin
-		bannerText := tl.NewText(xPos, i, line, tl.ColorYellow, tl.ColorBlack)
-		level.AddEntity(bannerText)
-	}
-
 	game.Screen().SetLevel(level)
 	game.Start()
 }
 
-func sendNotificationToHomerun(playerName string) {
-
+func sendNotificationToHomerun(playerName string, score int) {
 	dt := time.Now()
 	messageBody := homerun.Message{
-		Title:           "sthings-snake",
-		Message:         "sthings-snake",
+		Title:           fmt.Sprintf("sthings-snake - Score: %d", score),
+		Message:         fmt.Sprintf("Player %s scored %d points!", playerName, score),
 		Severity:        severityPreFix,
 		Author:          playerName,
 		Timestamp:       dt.Format("01-02-2006 15:04:05"),
@@ -360,12 +394,21 @@ func sendNotificationToHomerun(playerName string) {
 	}
 
 	rendered := homerun.RenderBody(homerun.HomeRunBodyData, messageBody)
-
-	// comment next line and uncomment Print answer lines to debug
 	homerun.SendToHomerun(homerunAddr, homerunToken, []byte(rendered), insecure)
 
-	// Print the answer for debugging purposes
-	//answer, resp := homerun.SendToHomerun(homerunAddr, token, []byte(rendered), insecure)
-	//fmt.Println("ANSWER STATUS: ", resp.Status)
-	//fmt.Println("ANSWER BODY: ", string(answer))
+	// Log to file
+	logFilePath := logPath
+	logEntry := fmt.Sprintf("%s - Player %s scored %d points\n", dt.Format("2006-01-02 15:04:05"), playerName, score)
+
+	// Append log entry to file
+	f, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Printf("Error opening log file: %v", err)
+		return
+	}
+	defer f.Close()
+
+	if _, err := f.WriteString(logEntry); err != nil {
+		log.Printf("Error writing to log file: %v", err)
+	}
 }
