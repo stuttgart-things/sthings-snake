@@ -8,6 +8,8 @@ Based on [chaossnake](https://github.com/deggja/chaossnake) - @deggja thank you 
 ```bash
 export HOMERUN_TOKEN=""
 export HOMERUN_ADDR="https://homerun.homerun-dev.."
+HOMERUN_SEVERITY_PREFIX=CHAOS
+LOG_PATH="/tmp/things-snake.log"
 
 sthings-snake
 ```
