@@ -53,8 +53,9 @@ const (
 
 func NewFood(playerName string) *Food {
 	return &Food{
-		Entity: tl.NewEntityFromCanvas(2, 2, tl.CanvasFromString("O")),
-		placed: false,
+		Entity:     tl.NewEntityFromCanvas(2, 2, tl.CanvasFromString("O")),
+		placed:     false,
+		playerName: playerName, // ✅ Ensure this is assigned
 	}
 }
 
@@ -379,10 +380,11 @@ func main() {
 
 func sendNotificationToHomerun(playerName string, score int) {
 	dt := time.Now()
+
 	messageBody := homerun.Message{
-		Title:           fmt.Sprintf("sthings-snake - Score: %d", score),
-		Message:         fmt.Sprintf("Player %s scored %d points!", playerName, score),
-		Severity:        severityPreFix,
+		Title:           fmt.Sprintf("%s scored %d points!", playerName, score),
+		Message:         fmt.Sprintf("%s scored %d points!", playerName, score),
+		Severity:        severityPreFix + getSeverityLevel(score),
 		Author:          playerName,
 		Timestamp:       dt.Format("01-02-2006 15:04:05"),
 		System:          "sthings-snake",
@@ -411,4 +413,23 @@ func sendNotificationToHomerun(playerName string, score int) {
 	if _, err := f.WriteString(logEntry); err != nil {
 		log.Printf("Error writing to log file: %v", err)
 	}
+}
+
+func getSeverityLevel(score int) string {
+	var severity string
+
+	switch {
+	case score >= 0 && score <= 5:
+		severity = "1"
+	case score >= 6 && score <= 10:
+		severity = "2"
+	case score >= 11 && score <= 15:
+		severity = "3"
+	case score >= 16:
+		severity = "4"
+	default:
+		severity = "Unknown"
+	}
+
+	return severity
 }
