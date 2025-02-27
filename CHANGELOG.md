@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/stuttgart-things/sthings-snake/compare/v1.2.2...v1.3.0) (2025-02-27)
+
+
+### Features
+
+* feat/add-score-conition ([e4804a6](https://github.com/stuttgart-things/sthings-snake/commit/e4804a6ab6d1e941e8ecb1a7b0bd40ef0d1ceb87))
+
 ## [1.2.2](https://github.com/stuttgart-things/sthings-snake/compare/v1.2.1...v1.2.2) (2025-02-27)
 
 
